@@ -79,7 +79,7 @@ export default async function DashboardPage() {
             Welcome back, {firstName} 👋
           </h1>
           <p style={{ fontSize: "15px", color: "#9ca3af" }}>
-            Here's what's happening with your agents today
+            Here&apos;s what&apos;s happening with your agents today.
           </p>
         </div>
 
