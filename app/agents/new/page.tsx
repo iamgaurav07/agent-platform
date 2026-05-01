@@ -120,10 +120,10 @@ export default function NewAgentPage() {
           {/* Submit */}
           <button
             onClick={handleSubmit}
-            disabled={createAgent.isLoading}
+            disabled={createAgent.isPending}
             className="w-full bg-gray-900 text-white py-3 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
-            {createAgent.isLoading ? "Creating..." : "Create agent"}
+            {createAgent.isPending ? "Creating..." : "Create agent"}
           </button>
 
         </div>
