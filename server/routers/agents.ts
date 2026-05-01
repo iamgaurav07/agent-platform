@@ -1,34 +1,18 @@
-import { z } from "zod";
-import { router, protectedProcedure } from "../trpc";
-import { db } from "@/db";
+import { z } from "zod"
+import { router, protectedProcedure } from "../trpc"
+import { db } from "@/db"
 import { agents, runs, messages, toolCalls } from "@/db/schema"
-import { eq } from "drizzle-orm";
-import { randomUUID } from "crypto";
+import { eq } from "drizzle-orm"
+import { randomUUID } from "crypto"
 
 export const agentsRouter = router({
-  delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      // first get all runs for this agent
-      const agentRuns = await db
-        .select()
-        .from(runs)
-        .where(eq(runs.agentId, input.id));
-
-      // delete messages for each run
-      for (const run of agentRuns) {
-        await db.delete(messages).where(eq(messages.runId, run.id));
-        await db.delete(toolCalls).where(eq(toolCalls.runId, run.id));
-      }
-
-      // delete runs
-      await db.delete(runs).where(eq(runs.agentId, input.id));
-
-      // now delete the agent
-      await db.delete(agents).where(eq(agents.id, input.id));
-
-      return { success: true };
-    }),
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    const result = await db
+      .select()
+      .from(agents)
+      .where(eq(agents.userId, ctx.session.user.id))
+    return result
+  }),
 
   create: protectedProcedure
     .input(
@@ -37,28 +21,21 @@ export const agentsRouter = router({
         description: z.string().optional(),
         systemPrompt: z.string().min(1, "System prompt is required"),
         model: z.string().default("gpt-4o-mini"),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
-      try {
-        const result = await db
-          .insert(agents)
-          .values({
-            id: randomUUID(),
-            userId: ctx.session.user.id,
-            name: input.name,
-            description: input.description,
-            systemPrompt: input.systemPrompt,
-            model: input.model,
-          })
-          .returning();
-        return result[0];
-      } catch (error: any) {
-        console.error("Full error:", JSON.stringify(error, null, 2));
-        console.error("Error message:", error.message);
-        console.error("Error cause:", error.cause);
-        throw error;
-      }
+      const result = await db
+        .insert(agents)
+        .values({
+          id: randomUUID(),
+          userId: ctx.session.user.id,
+          name: input.name,
+          description: input.description,
+          systemPrompt: input.systemPrompt,
+          model: input.model,
+        })
+        .returning()
+      return result[0]
     }),
 
   update: protectedProcedure
@@ -69,7 +46,7 @@ export const agentsRouter = router({
         description: z.string().optional(),
         systemPrompt: z.string().min(1, "System prompt is required"),
         model: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const result = await db
@@ -82,14 +59,26 @@ export const agentsRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(agents.id, input.id))
-        .returning();
-      return result[0];
+        .returning()
+      return result[0]
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await db.delete(agents).where(eq(agents.id, input.id));
-      return { success: true };
+      const agentRuns = await db
+        .select()
+        .from(runs)
+        .where(eq(runs.agentId, input.id))
+
+      for (const run of agentRuns) {
+        await db.delete(messages).where(eq(messages.runId, run.id))
+        await db.delete(toolCalls).where(eq(toolCalls.runId, run.id))
+      }
+
+      await db.delete(runs).where(eq(runs.agentId, input.id))
+      await db.delete(agents).where(eq(agents.id, input.id))
+
+      return { success: true }
     }),
-});
+})
