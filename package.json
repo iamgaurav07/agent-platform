@@ -14,7 +14,6 @@
     "@ai-sdk/openai": "^3.0.55",
     "@ai-sdk/react": "^3.0.174",
     "@auth/drizzle-adapter": "^1.11.2",
-    "@nanostores/react": "github:ai/react",
     "@tanstack/react-query": "^5.100.6",
     "@tavily/core": "^0.7.3",
     "@trpc/client": "^11.17.0",
@@ -40,7 +39,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.4",
+    "eslint-config-next": "^15.5.15",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
