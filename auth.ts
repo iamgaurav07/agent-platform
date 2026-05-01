@@ -1,4 +1,5 @@
-import NextAuth from "next-auth"
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const NextAuth = require("next-auth").default
 import GitHub from "next-auth/providers/github"
 import { db } from "@/db"
 import { users } from "@/db/schema"
@@ -14,7 +15,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user }: { user: any }) {
       try {
         if (!user.email) return false
         const existing = await db
@@ -37,13 +38,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return false
       }
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any, token: any }) {
       if (session.user && token.sub) {
         session.user.id = token.sub
       }
       return session
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any, user: any }) {
       if (user) token.sub = user.id
       return token
     },
