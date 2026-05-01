@@ -1,8 +1,8 @@
-import NextAuth from "next-auth"
-import GitHub from "next-auth/providers/github"
-import { db } from "@/db"
-import { users } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import NextAuth from "next-auth";
+import GitHub from "next-auth/providers/github";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 // @ts-expect-error next-auth v5 beta type issue
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -19,12 +19,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user }: { user: any }) {
       try {
-        if (!user.email) return false
+        if (!user.email) return false;
         const existing = await db
           .select()
           .from(users)
           .where(eq(users.email, user.email))
-          .limit(1)
+          .limit(1);
 
         if (existing.length === 0) {
           await db.insert(users).values({
@@ -32,23 +32,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: user.name,
             email: user.email,
             image: user.image,
-          })
+          });
         }
-        return true
+        return true;
       } catch (error) {
-        console.error("Error saving user:", error)
-        return false
+        console.error("SignIn error:", error); // this will show in Railway logs
+        return false; // this causes "Access Denied"
       }
     },
-    async session({ session, token }: { session: any, token: any }) {
+    async session({ session, token }: { session: any; token: any }) {
       if (session.user && token.sub) {
-        session.user.id = token.sub
+        session.user.id = token.sub;
       }
-      return session
+      return session;
     },
-    async jwt({ token, user }: { token: any, user: any }) {
-      if (user) token.sub = user.id
-      return token
+    async jwt({ token, user }: { token: any; user: any }) {
+      if (user) token.sub = user.id;
+      return token;
     },
   },
-})
+});
