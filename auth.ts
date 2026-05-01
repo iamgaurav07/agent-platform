@@ -6,6 +6,7 @@ import { users } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET,
   providers: [
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID!,
