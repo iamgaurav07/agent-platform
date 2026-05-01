@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { trpc } from "@/lib/trpc"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 type Agent = {
   id: string
@@ -14,68 +15,128 @@ type Agent = {
 
 export default function AgentCard({ agent }: { agent: Agent }) {
   const router = useRouter()
+  const [hovered, setHovered] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
   const deleteAgent = trpc.agents.delete.useMutation({
     onSuccess: () => router.refresh(),
   })
 
+  const modelColors: Record<string, { bg: string; color: string }> = {
+    "gpt-4o": { bg: "#f0fdf4", color: "#16a34a" },
+    "gpt-4o-mini": { bg: "#eff6ff", color: "#2563eb" },
+    "gpt-3.5-turbo": { bg: "#fefce8", color: "#ca8a04" },
+  }
+  const modelStyle = modelColors[agent.model] ?? { bg: "#f5f5f5", color: "#737373" }
+
   return (
     <div
-      style={{ background: "white", border: "1px solid rgba(0,0,0,0.06)", borderRadius: "20px", padding: "24px", position: "relative", transition: "all 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", cursor: "pointer" }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 8px 24px rgba(99,102,241,0.12)"
-        e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"
-        e.currentTarget.style.transform = "translateY(-2px)"
+      style={{
+        background: "var(--bg-card)",
+        border: `1px solid ${hovered ? "var(--border-hover)" : "var(--border)"}`,
+        borderRadius: "var(--radius-lg)",
+        padding: "20px",
+        position: "relative",
+        transition: "all 0.2s ease",
+        boxShadow: hovered ? "var(--shadow)" : "var(--shadow-sm)",
+        transform: hovered ? "translateY(-2px)" : "none",
+        cursor: "default",
       }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"
-        e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)"
-        e.currentTarget.style.transform = "translateY(0)"
-      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <Link href={`/agents/${agent.id}`} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
-          <div style={{ width: "48px", height: "48px", background: "linear-gradient(135deg, #eef2ff, #e0e7ff)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>
-            🤖
-          </div>
-          <span style={{ fontSize: "11px", background: "#f9fafb", color: "#6b7280", padding: "4px 10px", borderRadius: "20px", border: "1px solid #f3f4f6", fontWeight: "500" }}>
-            {agent.model}
-          </span>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "14px" }}>
+        <div style={{
+          width: "44px", height: "44px",
+          background: "var(--accent-light)",
+          borderRadius: "12px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "20px",
+        }}>
+          🤖
         </div>
-        <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px", color: "#111827", letterSpacing: "-0.3px" }}>
-          {agent.name}
-        </h3>
-        <p style={{ fontSize: "13px", color: "#9ca3af", lineHeight: "1.6", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
-          {agent.description ?? agent.systemPrompt}
-        </p>
-      </Link>
+        <span style={{
+          fontSize: "11px", fontWeight: "600",
+          background: modelStyle.bg, color: modelStyle.color,
+          padding: "3px 10px", borderRadius: "20px",
+          letterSpacing: "0.3px",
+        }}>
+          {agent.model}
+        </span>
+      </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "20px", paddingTop: "16px", borderTop: "1px solid #f9fafb" }}>
+      {/* Content */}
+      <h3 style={{ fontSize: "15px", fontWeight: "600", color: "var(--text-primary)", marginBottom: "6px", letterSpacing: "-0.2px" }}>
+        {agent.name}
+      </h3>
+      <p style={{
+        fontSize: "13px", color: "var(--text-secondary)", lineHeight: "1.6",
+        overflow: "hidden", display: "-webkit-box",
+        WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const,
+        marginBottom: "18px",
+      }}>
+        {agent.description || agent.systemPrompt}
+      </p>
+
+      {/* Footer */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "14px", borderTop: "1px solid var(--border)" }}>
         <Link
           href={`/agents/${agent.id}`}
-          style={{ fontSize: "13px", color: "#6366f1", textDecoration: "none", fontWeight: "600", display: "flex", alignItems: "center", gap: "4px" }}
+          style={{
+            display: "flex", alignItems: "center", gap: "4px",
+            fontSize: "13px", fontWeight: "600",
+            color: "var(--accent)", textDecoration: "none",
+            padding: "6px 12px",
+            background: "var(--accent-light)",
+            borderRadius: "8px",
+            transition: "all 0.15s",
+          }}
         >
-          Open chat
-          <span style={{ fontSize: "16px", lineHeight: 1 }}>→</span>
+          Open Chat
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </Link>
-        <button
-          onClick={(e) => {
-            e.preventDefault()
-            if (confirm("Delete this agent?")) {
-              deleteAgent.mutate({ id: agent.id })
-            }
-          }}
-          style={{ fontSize: "12px", color: "#d1d5db", background: "none", border: "none", cursor: "pointer", fontWeight: "500", padding: "4px 8px", borderRadius: "6px", transition: "all 0.15s" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#ef4444"
-            e.currentTarget.style.background = "#fef2f2"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#d1d5db"
-            e.currentTarget.style.background = "none"
-          }}
-        >
-          Delete
-        </button>
+
+        <div style={{ display: "flex", gap: "6px" }}>
+          <Link
+            href={`/agents/${agent.id}/edit`}
+            style={{
+              fontSize: "12px", fontWeight: "500",
+              color: "var(--text-secondary)",
+              padding: "6px 12px",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+              textDecoration: "none",
+              transition: "all 0.15s",
+              background: "transparent",
+            }}
+          >
+            Edit
+          </Link>
+          <button
+            onClick={() => {
+              if (confirm(`Delete "${agent.name}"?`)) {
+                setDeleting(true)
+                deleteAgent.mutate({ id: agent.id })
+              }
+            }}
+            disabled={deleting}
+            style={{
+              fontSize: "12px", fontWeight: "500",
+              color: deleting ? "var(--text-tertiary)" : "var(--danger)",
+              padding: "6px 12px",
+              border: `1px solid ${deleting ? "var(--border)" : "#fecaca"}`,
+              borderRadius: "8px",
+              background: deleting ? "transparent" : "var(--danger-light)",
+              cursor: deleting ? "not-allowed" : "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {deleting ? "..." : "Delete"}
+          </button>
+        </div>
       </div>
     </div>
   )
