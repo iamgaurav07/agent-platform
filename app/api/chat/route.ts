@@ -1,25 +1,24 @@
-import { createOpenAI } from "@ai-sdk/openai"
-import { streamText, tool } from "ai"
-import { z } from "zod"
-import { auth } from "@/app/api/auth/[...nextauth]/route"
-import { db } from "@/db"
-import { agents } from "@/db/schema"
-import { eq } from "drizzle-orm"
-import { tavily } from "@tavily/core"
+import { createOpenAI } from "@ai-sdk/openai";
+import { stepCountIs, streamText, tool } from "ai";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { db } from "@/db";
+import { agents } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { tavily } from "@tavily/core";
 
-export const maxDuration = 30
+export const maxDuration = 30;
 
 const openaiClient = createOpenAI({
-  compatibility: "strict",
-})
+  apiKey: process.env.OPENAI_API_KEY!,
+});
 
 export async function POST(req: Request) {
-  const session = await auth()
+  const session = await auth();
 
   if (!session) {
-    return new Response("Unauthorized", { status: 401 })
+    return new Response("Unauthorized", { status: 401 });
   }
-
 
   const body = await req.json();
   const { messages, agentId } = body;
@@ -35,11 +34,12 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: openaiClient.chat(agent[0].model),
+    model: openaiClient(agent[0].model),
     system:
       agent[0].systemPrompt +
       "\n\nIMPORTANT: After using any tool, always provide a final text response summarising the result to the user.",
     messages,
+    stopWhen: stepCountIs(5),
     tools: {
       webSearch: tool({
         description: "Search the web for current information on any topic",
@@ -53,14 +53,12 @@ export async function POST(req: Request) {
               maxResults: 3,
               searchDepth: "basic",
             });
-
             const results = response.results
               .map((r) => `**${r.title}**\n${r.content}\nSource: ${r.url}`)
               .join("\n\n");
-
             return { results };
-          } catch (error) {
-            return { error: "Search failed. Please try again." };
+          } catch {
+            return { error: "Search failed. Please try again." }
           }
         },
       }),

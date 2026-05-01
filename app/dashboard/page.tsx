@@ -1,26 +1,25 @@
-import { auth } from "@/app/api/auth/[...nextauth]/route"
-import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { agents } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import Image from "next/image";
-import Link from "next/link";
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { db } from "@/db"
+import { agents } from "@/db/schema"
+import { eq } from "drizzle-orm"
+import Image from "next/image"
+import Link from "next/link"
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const session = await auth()
 
   if (!session) {
-    redirect("/login");
+    redirect("/login")
   }
 
   const userAgents = await db
     .select()
     .from(agents)
-    .where(eq(agents.userId, session.user.id));
+    .where(eq(agents.userId, session.user.id))
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
       <nav className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between">
         <span className="text-lg font-semibold tracking-tight">AgentFlow</span>
         <div className="flex items-center gap-4">
@@ -36,15 +35,13 @@ export default async function DashboardPage() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-8 py-10">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-semibold">
               Welcome back, {session.user?.name?.split(" ")[0]} 👋
             </h1>
             <p className="text-gray-500 text-sm mt-1">
-              {userAgents.length} agent{userAgents.length !== 1 ? "s" : ""}{" "}
-              created
+              {userAgents.length} agent{userAgents.length !== 1 ? "s" : ""} created
             </p>
           </div>
           <Link
@@ -55,7 +52,6 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white border border-gray-100 rounded-2xl p-6">
             <p className="text-sm text-gray-500 mb-1">Total agents</p>
@@ -71,7 +67,6 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Agents list */}
         {userAgents.length === 0 ? (
           <div className="bg-white border border-gray-100 rounded-2xl p-10 text-center">
             <div className="text-4xl mb-4">🤖</div>
@@ -110,5 +105,5 @@ export default async function DashboardPage() {
         )}
       </div>
     </div>
-  );
+  )
 }
