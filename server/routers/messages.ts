@@ -2,34 +2,34 @@ import { z } from "zod"
 import { router, protectedProcedure } from "../trpc"
 import { db } from "@/db"
 import { messages, runs } from "@/db/schema"
-import { eq, asc } from "drizzle-orm"
+import { eq, asc, inArray } from "drizzle-orm"
 import { randomUUID } from "crypto"
 
 export const messagesRouter = router({
-  // get all messages for an agent
   getByAgent: protectedProcedure
     .input(z.object({ agentId: z.string() }))
     .query(async ({ ctx, input }) => {
-      // find the latest run for this agent
-      const latestRun = await db
+      // get ALL runs for this agent
+      const agentRuns = await db
         .select()
         .from(runs)
         .where(eq(runs.agentId, input.agentId))
-        .orderBy(runs.createdAt)
-        .limit(1)
+        .orderBy(asc(runs.createdAt))
 
-      if (!latestRun[0]) return []
+      if (!agentRuns.length) return []
 
+      const runIds = agentRuns.map((r) => r.id)
+
+      // get all messages for all runs
       const result = await db
         .select()
         .from(messages)
-        .where(eq(messages.runId, latestRun[0].id))
+        .where(inArray(messages.runId, runIds))
         .orderBy(asc(messages.createdAt))
 
       return result
     }),
 
-  // save a message
   save: protectedProcedure
     .input(z.object({
       runId: z.string(),
@@ -49,7 +49,6 @@ export const messagesRouter = router({
       return result[0]
     }),
 
-  // create a new run and return its id
   createRun: protectedProcedure
     .input(z.object({
       agentId: z.string(),
