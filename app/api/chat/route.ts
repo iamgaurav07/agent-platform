@@ -3,9 +3,10 @@ import { stepCountIs, streamText, tool } from "ai";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { agents } from "@/db/schema";
+import { agents, runs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { tavily } from "@tavily/core";
+import { randomUUID } from "crypto";
 
 export const maxDuration = 30;
 
@@ -40,6 +41,21 @@ export async function POST(req: Request) {
       "\n\nIMPORTANT: After using any tool, always provide a final text response summarising the result to the user.",
     messages,
     stopWhen: stepCountIs(5),
+    onFinish: async ({ usage }) => {
+    try {
+      await db.insert(runs).values({
+        id: randomUUID(),
+        agentId: agent[0].id,
+        userId: session.user.id,
+        status: "done",
+        input: messages[messages.length - 1]?.content ?? "",
+        tokensUsed: usage.totalTokens,
+      })
+      console.log("Run saved, tokens:", usage.totalTokens)
+    } catch (error) {
+      console.error("Error saving run:", error)
+    }
+  },
     tools: {
       webSearch: tool({
         description: "Search the web for current information on any topic",
@@ -58,7 +74,7 @@ export async function POST(req: Request) {
               .join("\n\n");
             return { results };
           } catch {
-            return { error: "Search failed. Please try again." }
+            return { error: "Search failed. Please try again." };
           }
         },
       }),

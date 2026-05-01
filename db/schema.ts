@@ -53,19 +53,19 @@ export const verificationTokens = pgTable("verification_token", {
 }))
 
 // Agents table
-export const agents = pgTable("agent", {
+export const agents = pgTable("agents", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").references(() => users.id).notNull(),
   name: text("name").notNull(),
   description: text("description"),
   systemPrompt: text("system_prompt").notNull(),
-  model: text("model").default("gpt-4o").notNull(),
+  model: text("model").default("gpt-4o-mini").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
 // Runs table
-export const runs = pgTable("run", {
+export const runs = pgTable("runs", {
   id: uuid("id").defaultRandom().primaryKey(),
   agentId: uuid("agent_id").references(() => agents.id).notNull(),
   userId: text("user_id").references(() => users.id).notNull(),
