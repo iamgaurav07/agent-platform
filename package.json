@@ -16,6 +16,7 @@
     "@auth/drizzle-adapter": "^1.11.2",
     "@nanostores/react": "github:ai/react",
     "@tanstack/react-query": "^5.100.6",
+    "@tavily/core": "^0.7.3",
     "@trpc/client": "^11.17.0",
     "@trpc/next": "^11.17.0",
     "@trpc/react-query": "^11.17.0",

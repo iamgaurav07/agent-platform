@@ -1,37 +1,44 @@
-import { openai } from "@ai-sdk/openai"
-import { streamText, tool } from "ai"
-import { z } from "zod"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import { db } from "@/db"
-import { agents } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { createOpenAI } from "@ai-sdk/openai";
+import { streamText, tool } from "ai";
+import { z } from "zod";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { db } from "@/db";
+import { agents } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { tavily } from "@tavily/core";
 
-export const maxDuration = 30
+export const maxDuration = 30;
+
+const openaiClient = createOpenAI({
+  compatibility: "strict",
+});
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session) {
-    return new Response("Unauthorized", { status: 401 })
+    return new Response("Unauthorized", { status: 401 });
   }
 
-  const body = await req.json()
-  const { messages, agentId } = body
+  const body = await req.json();
+  const { messages, agentId } = body;
 
   const agent = await db
     .select()
     .from(agents)
     .where(eq(agents.id, agentId))
-    .limit(1)
+    .limit(1);
 
   if (!agent[0]) {
-    return new Response("Agent not found", { status: 404 })
+    return new Response("Agent not found", { status: 404 });
   }
 
   const result = streamText({
-    model: openai(agent[0].model),
-    system: agent[0].systemPrompt,
+    model: openaiClient.chat(agent[0].model),
+    system:
+      agent[0].systemPrompt +
+      "\n\nIMPORTANT: After using any tool, always provide a final text response summarising the result to the user.",
     messages,
     maxSteps: 5,
     tools: {
@@ -41,8 +48,20 @@ export async function POST(req: Request) {
           query: z.string().describe("The search query"),
         }),
         execute: async ({ query }) => {
-          return {
-            results: `Search results for "${query}": This is a simulated result. In production this would call a real search API like Tavily.`,
+          try {
+            const client = tavily({ apiKey: process.env.TAVILY_API_KEY! });
+            const response = await client.search(query, {
+              maxResults: 3,
+              searchDepth: "basic",
+            });
+
+            const results = response.results
+              .map((r) => `**${r.title}**\n${r.content}\nSource: ${r.url}`)
+              .join("\n\n");
+
+            return { results };
+          } catch (error) {
+            return { error: "Search failed. Please try again." };
           }
         },
       }),
@@ -53,15 +72,15 @@ export async function POST(req: Request) {
         }),
         execute: async ({ expression }) => {
           try {
-            const result = Function(`"use strict"; return (${expression})`)()
-            return { result: String(result) }
+            const result = Function(`"use strict"; return (${expression})`)();
+            return { result: String(result) };
           } catch {
-            return { error: "Invalid expression" }
+            return { error: "Invalid expression" };
           }
         },
       }),
     },
-  })
+  });
 
-  return result.toUIMessageStreamResponse()
+  return result.toUIMessageStreamResponse();
 }
