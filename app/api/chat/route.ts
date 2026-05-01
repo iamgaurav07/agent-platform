@@ -1,25 +1,25 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, tool } from "ai";
-import { z } from "zod";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { db } from "@/db";
-import { agents } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { tavily } from "@tavily/core";
+import { createOpenAI } from "@ai-sdk/openai"
+import { streamText, tool } from "ai"
+import { z } from "zod"
+import { auth } from "@/app/api/auth/[...nextauth]/route"
+import { db } from "@/db"
+import { agents } from "@/db/schema"
+import { eq } from "drizzle-orm"
+import { tavily } from "@tavily/core"
 
-export const maxDuration = 30;
+export const maxDuration = 30
 
 const openaiClient = createOpenAI({
   compatibility: "strict",
-});
+})
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth()
 
   if (!session) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response("Unauthorized", { status: 401 })
   }
+
 
   const body = await req.json();
   const { messages, agentId } = body;
@@ -40,7 +40,6 @@ export async function POST(req: Request) {
       agent[0].systemPrompt +
       "\n\nIMPORTANT: After using any tool, always provide a final text response summarising the result to the user.",
     messages,
-    maxSteps: 5,
     tools: {
       webSearch: tool({
         description: "Search the web for current information on any topic",
