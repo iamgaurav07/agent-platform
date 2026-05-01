@@ -55,7 +55,7 @@ export const verificationTokens = pgTable("verification_token", {
 // Agents table
 export const agents = pgTable("agents", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: text("user_id").references(() => users.id).notNull(),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   name: text("name").notNull(),
   description: text("description"),
   systemPrompt: text("system_prompt").notNull(),
@@ -67,7 +67,7 @@ export const agents = pgTable("agents", {
 // Runs table
 export const runs = pgTable("runs", {
   id: uuid("id").defaultRandom().primaryKey(),
-  agentId: uuid("agent_id").references(() => agents.id).notNull(),
+  agentId: uuid("agent_id").references(() => agents.id, { onDelete: "cascade" }).notNull(),
   userId: text("user_id").references(() => users.id).notNull(),
   status: text("status").default("pending").notNull(),
   input: text("input").notNull(),
@@ -89,7 +89,7 @@ export const messages = pgTable("messages", {
 // Tool calls table
 export const toolCalls = pgTable("tool_calls", {
   id: uuid("id").defaultRandom().primaryKey(),
-  runId: uuid("run_id").references(() => runs.id).notNull(),
+  runId: uuid("run_id").references(() => runs.id, { onDelete: "cascade" }).notNull(),
   toolName: text("tool_name").notNull(),
   input: text("input").notNull(),
   output: text("output"),
