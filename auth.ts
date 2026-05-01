@@ -1,12 +1,13 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const NextAuth = require("next-auth").default
+import NextAuth from "next-auth"
 import GitHub from "next-auth/providers/github"
 import { db } from "@/db"
 import { users } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
+// @ts-expect-error next-auth v5 beta type issue
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET,
+  trustHost: true,
   providers: [
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID!,
