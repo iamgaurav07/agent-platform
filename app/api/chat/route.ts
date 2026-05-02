@@ -37,17 +37,14 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: openaiClient(agent[0].model),
-    system:
-      agent[0].systemPrompt +
-      `
+    system: agent[0].systemPrompt + `
 
-STRICT RULES:
-- You have searchKnowledge tool. Use it when asked about documents.
-- After getting search results, write YOUR OWN summary. Max 5 sentences.
-- NEVER copy or repeat the raw text from search results.
-- If asked "what is this document" → one paragraph summary only.
-- If asked for specific info → one direct answer only.
-- Be brief. Professional. Concise.`,
+INSTRUCTIONS:
+- You have a searchKnowledge tool. Use it when asked about uploaded documents.
+- After searching, answer in YOUR OWN WORDS. Be concise and direct.
+- For yes/no questions like "does X have experience in Y" — answer in 1-2 sentences max.
+- Never show raw document text. Never mention "excerpts" or "chunks".
+- Just answer naturally like a human assistant would.`,
     messages,
     stopWhen: stepCountIs(10),
     onFinish: async ({ usage }) => {
@@ -126,7 +123,7 @@ STRICT RULES:
             const context = results.map((r) => r.content).join(" ... ");
 
             return {
-              results: `Here are relevant excerpts (summarize these in your own words, do not copy them):\n\n${context}`,
+              results: context,
             };
           } catch (error) {
             return { error: "Search failed" };
