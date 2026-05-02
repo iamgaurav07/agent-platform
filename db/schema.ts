@@ -5,6 +5,7 @@ import {
   uuid,
   integer,
   primaryKey,
+  vector,
 } from "drizzle-orm/pg-core"
 
 // Users table
@@ -93,5 +94,26 @@ export const toolCalls = pgTable("tool_calls", {
   toolName: text("tool_name").notNull(),
   input: text("input").notNull(),
   output: text("output"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+
+// Knowledge base table — one per agent
+export const knowledgeBases = pgTable("knowledge_bases", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  agentId: uuid("agent_id").references(() => agents.id, { onDelete: "cascade" }).notNull(),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+// Documents table — stores chunks with embeddings
+export const documents = pgTable("documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  knowledgeBaseId: uuid("knowledge_base_id").references(() => knowledgeBases.id, { onDelete: "cascade" }).notNull(),
+  fileName: text("file_name").notNull(),
+  content: text("content").notNull(),
+  embedding: vector("embedding", { dimensions: 1536 }),
+  chunkIndex: integer("chunk_index").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
