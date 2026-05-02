@@ -136,20 +136,12 @@ export default function AgentChatPage() {
                 );
               }
 
-              if (
-                data.type === "tool-output-available" &&
-                data.output &&
-                !assistantContent
-              ) {
-                const output = data.output;
-                const displayText = output.result
-                  ? `The answer is **${output.result}**`
-                  : output.results || output.error || JSON.stringify(output);
-                assistantContent = displayText;
+              if (data.type === "tool-output-available") {
+                // don't show raw tool output — wait for the AI's final text response
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId && m.content === ""
-                      ? { ...m, content: displayText }
+                      ? { ...m, content: "" }
                       : m,
                   ),
                 );
@@ -160,14 +152,14 @@ export default function AgentChatPage() {
                 data.finishReason === "tool-calls" &&
                 !assistantContent
               ) {
-                assistantContent = "Done.";
+                /* assistantContent = "Done.";
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantId && m.content === ""
                       ? { ...m, content: "Done." }
                       : m,
                   ),
-                );
+                ); */
               }
             } catch {
               // skip
