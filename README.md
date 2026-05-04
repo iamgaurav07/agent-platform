@@ -126,7 +126,7 @@ TAVILY_API_KEY=your-tavily-key
 
 ---
 
-## Project Structure
+## Project Structure 
 
 ```
 agent-platform/
