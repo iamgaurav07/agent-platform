@@ -13,6 +13,8 @@ export const agentsRouter = router({
       .where(eq(agents.userId, ctx.session.user.id))
     return result
   }),
+
+  asdf AI_SDK_DEFAULT_PROVIDER
   create: protectedProcedure
     .input(
       z.object({
