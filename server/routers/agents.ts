@@ -13,14 +13,6 @@ export const agentsRouter = router({
       .where(eq(agents.userId, ctx.session.user.id))
     return result
   }),
-
-  asdf a
-  asd fa
-  sd as
-  df asdf
-   asdf 
-   asd
-
   create: protectedProcedure
     .input(
       z.object({
