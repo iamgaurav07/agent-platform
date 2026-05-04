@@ -23,10 +23,7 @@ export const agentsRouter = router({
         model: z.string().default("gpt-4o-mini"),
       })
     )
-
-    asdf as
-     asdf 
-    .mutation(asyncasd fa ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const result = await db
         .insert(agents)
         .values({
