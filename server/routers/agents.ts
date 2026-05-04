@@ -14,7 +14,6 @@ export const agentsRouter = router({
     return result
   }),
 
-  asdf AI_SDK_DEFAULT_PROVIDER
   create: protectedProcedure
     .input(
       z.object({
@@ -24,7 +23,10 @@ export const agentsRouter = router({
         model: z.string().default("gpt-4o-mini"),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+
+    asdf as
+     asdf 
+    .mutation(asyncasd fa ({ ctx, input }) => {
       const result = await db
         .insert(agents)
         .values({
